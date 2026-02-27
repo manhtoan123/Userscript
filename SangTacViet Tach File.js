@@ -2,8 +2,8 @@
 // @name         Uploader - Tách 1 File TXT Dài Thành Nhiều Chương
 // @namespace    http://tampermonkey.net/
 // @version      29.0
-// @description  v29.0: ETA thời gian hoàn thành, Worker Timer chống tab ẩn, chọn chương trước upload. v28.5: Lọc thông báo hệ thống.
-// @author       B���n & AI Helper
+// @description  Tách file TXT thành nhiều chương, chọn chương trước khi upload, ETA tiến độ, Worker Timer chống tab ẩn.
+// @author       @NMT25
 // @match        *://*/uploader/list-chapter/*
 // @match        *://*/uploader/add-chapter/*
 // @grant        unsafeWindow
