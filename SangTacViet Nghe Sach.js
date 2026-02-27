@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      2.1
 // @author       @NMT25
-// @description  (v2.1) Nút nghe sách, đếm giờ, tự chuyển chương, preload chương kế, ghi nhớ vị trí, vòng tiến trình.
+// @description  Nghe sách TTS: đếm giờ, tự chuyển chương, ghi nhớ vị trí, preload chương kế, vòng tiến trình.
 // @match        *://*.sangtacviet.com/*
 // @match        *://*.sangtacviet.app/*
 // @match        *://*.sangtacviet.me/*
@@ -25,20 +25,6 @@
 
 (function () {
     'use strict';
-
-    /* ==================================================================
-     *  SangTacViet Nghe Sách Plus v2.1
-     *  ----------------------------------------------------------------
-     *  MỚI trong v2.1:
-     *  ① Preload chương tiếp  – fetch trước nội dung khi đọc ~70%
-     *  ② Ghi nhớ vị trí      – auto-save câu đang đọc, resume khi mở lại
-     *  ③ Vòng tiến trình      – SVG arc quanh nút hiện % câu đã đọc
-     *
-     *  Giữ nguyên từ v2.0:
-     *  - Polling 400ms (player.reset() xóa events → không dùng .on())
-     *  - Monkey-patch ttsUI.onContentLoaded + ttsUI.applyConfig
-     *  - Nút riêng biệt, hoạt động song song TTS gốc
-     * ================================================================== */
 
     var POLL_MS    = 400;    // Tần suất polling (ms)
     var SAVE_EVERY = 15;     // Lưu timer mỗi N giây
