@@ -672,7 +672,10 @@
                             try { a.pause(); } catch (e) {}
                             URL.revokeObjectURL(url);
                         }, 50);
-                    }).catch(function () { URL.revokeObjectURL(url); });
+                    }).catch(function () {
+                        try { a.pause(); } catch (e2) {}
+                        URL.revokeObjectURL(url);
+                    });
                 }
             } catch (e) {}
         },
