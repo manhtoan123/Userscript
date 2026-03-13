@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SangTacViet Nghe Sach Plus
 // @namespace    http://tampermonkey.net/
-// @version      4.5
+// @version      4.6
 // @author       @NMT25
 // @description  Nghe sách tự động với TTS, bookmark, auto-continue
 // @match        *://*.sangtacviet.com/*
@@ -38,6 +38,11 @@
     // [FIX #9]  ensureTikTokPatch thoát sớm khi proto đã được patch
     // [FIX #10] AudioContext được close trong cleanup khi unload
     // [FIX #11] ldTimer được clear trong cleanup tổng thể
+    //
+    // v4.6 fixes:
+    // [FIX #12] trigger() cũng unlock HTML5 <audio> — iOS cần cả AudioContext lẫn HTMLAudioElement
+    // [FIX #13] handleClick() gọi AudioSessionFix.trigger() cùng gesture với play
+    // [FIX #14] MediaSession 'play' handler gọi AudioSessionFix.trigger()
 
     /* ── CONSTANTS ── */
     var POLL_MS      = 400;
@@ -413,6 +418,9 @@
             return;
         }
 
+        // [FIX #13] Unlock iOS audio trong cùng gesture với lệnh play
+        AudioSessionFix.trigger();
+
         if (p && p.tokenizedSentences && p.tokenizedSentences.length > 0) {
             AutoContinue.setActive(true);
             p.resume();
@@ -506,6 +514,8 @@
                         album:  ''
                     });
                     navigator.mediaSession.setActionHandler('play', function () {
+                        // [FIX #14] Unlock iOS audio khi play từ lock screen / notification
+                        AudioSessionFix.trigger();
                         var p = getPlayer();
                         if (p && p.tokenizedSentences && p.tokenizedSentences.length > 0) {
                             AutoContinue.setActive(true);
@@ -627,11 +637,53 @@
             step();
         },
 
+        // [FIX #12] Unlock HTML5 <audio> — iOS cần play() trên HTMLAudioElement
+        // trong user-gesture để kích hoạt audio session cho <audio> elements
+        _unlockHtmlAudio: function () {
+            try {
+                var buf = new ArrayBuffer(46);
+                var v   = new DataView(buf);
+                /* RIFF header */
+                v.setUint32(0,  0x52494646, false);   // 'RIFF'
+                v.setUint32(4,  38, true);
+                v.setUint32(8,  0x57415645, false);   // 'WAVE'
+                /* fmt  chunk */
+                v.setUint32(12, 0x666D7420, false);   // 'fmt '
+                v.setUint32(16, 16, true);
+                v.setUint16(20, 1, true);              // PCM
+                v.setUint16(22, 1, true);              // mono
+                v.setUint32(24, 22050, true);          // sample rate
+                v.setUint32(28, 44100, true);          // byte rate
+                v.setUint16(32, 2, true);              // block align
+                v.setUint16(34, 16, true);             // bits per sample
+                /* data chunk */
+                v.setUint32(36, 0x64617461, false);    // 'data'
+                v.setUint32(40, 2, true);
+                v.setInt16(44, 0, true);               // one silent sample
+
+                var blob = new Blob([buf], { type: 'audio/wav' });
+                var url  = URL.createObjectURL(blob);
+                var a    = new Audio(url);
+                a.volume = 0.01;
+                var p = a.play();
+                if (p && p.then) {
+                    p.then(function () {
+                        setTimeout(function () {
+                            try { a.pause(); } catch (e) {}
+                            URL.revokeObjectURL(url);
+                        }, 50);
+                    }).catch(function () { URL.revokeObjectURL(url); });
+                }
+            } catch (e) {}
+        },
+
         trigger: function () {
             var ctx = this._getCtx();
             if (!ctx) return;
             var me = this;
             me._bindGestureUnlock();
+            // [FIX #12] Unlock HTML5 Audio song song với AudioContext
+            me._unlockHtmlAudio();
             function _play() { me._ping(ctx, true); }
             if (ctx.state === 'suspended') {
                 ctx.resume().then(_play).catch(function () {
