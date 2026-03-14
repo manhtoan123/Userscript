@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      29.0
 // @description  v29.0: ETA thời gian hoàn thành, Worker Timer chống tab ẩn, chọn chương trước upload. v28.5: Lọc thông báo hệ thống.
-// @author       B���n & AI Helper
+// @author       Bạn & AI Helper
 // @match        *://*/uploader/list-chapter/*
 // @match        *://*/uploader/add-chapter/*
 // @grant        unsafeWindow
